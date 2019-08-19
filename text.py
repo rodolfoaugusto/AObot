@@ -1,13 +1,18 @@
 import cv2 as cv
 import numpy as np
-import win32gui, win32ui, win32con, win32api, win32clipboard
-import time, win32com.client
-import pyautogui
+import logging
+try:
+  import win32gui, win32ui, win32con, win32api, win32clipboard, win32com.client
+  import pyautogui
+except ModuleNotFoundError:
+  logging.warning('Application works only for Windows.')
+  pass
+import time
 import pytesseract
 import re
-import logging
 import pickle
 import matplotlib.pyplot as plt
+import re
 
 logging.basicConfig(format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S',level=logging.INFO)
 
@@ -20,6 +25,8 @@ tier = 3
 quality = 3
 data = []
 itemtype = 'staff'
+money = []
+
 def getClientWindow():
     # returns ((position),(size))
     hwnd = win32gui.FindWindow(None, "Albion Online Client")
@@ -34,12 +41,10 @@ def grab_screen(hwin,region=None):
     rect = win32gui.GetWindowRect(hwin)
     x = rect[0]
     y = rect[1]
-    
     width = rect[2] - x - 5
     height = rect[3] - y - 30
     left = 3
     top = 25
-
     hwindc = win32gui.GetWindowDC(hwin)
     srcdc = win32ui.CreateDCFromHandle(hwindc)
     memdc = srcdc.CreateCompatibleDC()
@@ -51,7 +56,6 @@ def grab_screen(hwin,region=None):
     signedIntsArray = bmp.GetBitmapBits(True)
     img = np.fromstring(signedIntsArray, dtype='uint8')
     img.shape = (height,width,4)
-
     srcdc.DeleteDC()
     memdc.DeleteDC()
     win32gui.ReleaseDC(hwin, hwindc)
@@ -70,6 +74,7 @@ def read_BMoffers(img):
     _list = text.split(' ')
     price = _list.pop()
     assert price.isdigit()
+    assert matchPrice(price)
     #_list.pop(0)
     _list = ['Adept\'s' if x in ['Adepes','Adept’','Adept’s','Adepe’s','Adept','Adepts', 'Adeprs','Adepr’s','depes','depts'] else x for x in _list]
     _list = ['Quarterstaff' if x in ['Quarterstaft','Quarterstaf','Quarterstatt'] else x for x in _list]
@@ -106,6 +111,7 @@ def read_AHoffers(img):
     #    _list.pop()
     itemname = ' '.join([c for c in _list])
     assert price.isdigit()
+    assert matchPrice(price)
     return (itemname,int(price))
 
 def read_title(img):
@@ -116,15 +122,25 @@ def read_title(img):
     #cv.waitKey(0)
     return pytesseract.image_to_string(img)
 
+def read_money(img):
+    img = img[133:165,820:920]
+    img[(img>140)]=255
+    img[(img>115) & (img < 255)]=0
+    img[(img<115) & (img > 0)]=255
+    #cv.imshow('img',img)
+    #cv.waitKey(0)
+    return pytesseract.image_to_string(img,config="-c tessedit_char_whitelist=0123456789mk.")
+
 def focus_action(hwin,active,func,*args):
     win32gui.SetForegroundWindow(hwin)
     func(*args)
     win32gui.SetForegroundWindow(active)
 
 def BM(hwin,active,repeat):
-    global tier, itemtype
+    global tier, itemtype, money
     img,pos = grab_screen(hwin)
     sell(pos)
+    money.append(read_money(pos))
     if tier < 3:
         changeTier(pos,tier+1)
     else:
@@ -310,12 +326,14 @@ def main():
     active = win32gui.GetForegroundWindow()
     hwin = win32gui.FindWindow(None, "Albion Online Client")
     i=0
-    global data
+    global data, money
     while True:
         if i%4 == 0 and i != 0:
             logging.info('Writing datafile. i == '+str(i))
             with open('data', 'wb') as fp:
                 pickle.dump(data, fp)
+            with open('money', 'wb') as fp:
+                pickle.dump(money, fp)
         BMfull = BM(hwin,active,25)
         BMtoAH(hwin)
         AH(hwin,active,BMfull)
@@ -332,13 +350,20 @@ def test():
         BMtoAH(hwin)
         AHtoBM(hwin)
 
+def testMoney(imgpath):
+  img = cv.imread(imgpath,0)
+  logging.info(read_money(img))
+
 def readData(filename):
     with open (filename, 'rb') as fp:
         data = pickle.load(fp)
     plt.scatter(list(zip(*data))[0],list(zip(*data))[1])
     plt.show()
 
+def matchPrice(string):
+  return (re.match('^\d{1,3}(,\d{3})*$',string) is not None)
+
 if __name__ == '__main__':
     main()
     #readData('data')
-    #test()
+    #testMoney('alb_bm.jpg')
