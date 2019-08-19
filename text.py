@@ -71,9 +71,9 @@ def read_BMoffers(img):
     price = _list.pop()
     assert price.isdigit()
     #_list.pop(0)
-    _list = ['Adept\'s' if x in ['Adepes','Adept’','Adept’s','Adepe’s','Adept','Adepts', 'Adeprs','Adepr’s','depes'] else x for x in _list]
+    _list = ['Adept\'s' if x in ['Adepes','Adept’','Adept’s','Adepe’s','Adept','Adepts', 'Adeprs','Adepr’s','depes','depts'] else x for x in _list]
     _list = ['Quarterstaff' if x in ['Quarterstaft','Quarterstaf','Quarterstatt'] else x for x in _list]
-    _list = ['Staff' if x in ['Stat','Statt','staff','statt','stat','Scatt','Scaft','Staft','staf','Staf','start','Scat','scat','Saft','staft','statf','Statf','Start','Seatt'] else x for x in _list]
+    _list = ['Staff' if x in ['Stat','Statt','staff','statt','stat','Scatt','Scaft','Staft','staf','Staf','start','Scat','scat','Saft','staft','statf','Statf','Start','Seatt','seatf'] else x for x in _list]
     if not _list:
         return None
     if 'Staff' not in _list:
