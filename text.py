@@ -1,11 +1,15 @@
 import cv2 as cv
 import numpy as np
-import win32gui, win32ui, win32con, win32api, win32clipboard
-import time, win32com.client
-import pyautogui
+import logging
+try:
+  import win32gui, win32ui, win32con, win32api, win32clipboard, win32com.client
+  import pyautogui
+except ModuleNotFoundError:
+  logging.warning('Application works only for Windows.')
+  pass
+import time
 import pytesseract
 import re
-import logging
 import pickle
 import matplotlib.pyplot as plt
 
@@ -20,6 +24,7 @@ tier = 3
 quality = 3
 data = []
 itemtype = 'staff'
+
 def getClientWindow():
     # returns ((position),(size))
     hwnd = win32gui.FindWindow(None, "Albion Online Client")
@@ -34,12 +39,10 @@ def grab_screen(hwin,region=None):
     rect = win32gui.GetWindowRect(hwin)
     x = rect[0]
     y = rect[1]
-    
     width = rect[2] - x - 5
     height = rect[3] - y - 30
     left = 3
     top = 25
-
     hwindc = win32gui.GetWindowDC(hwin)
     srcdc = win32ui.CreateDCFromHandle(hwindc)
     memdc = srcdc.CreateCompatibleDC()
@@ -51,7 +54,6 @@ def grab_screen(hwin,region=None):
     signedIntsArray = bmp.GetBitmapBits(True)
     img = np.fromstring(signedIntsArray, dtype='uint8')
     img.shape = (height,width,4)
-
     srcdc.DeleteDC()
     memdc.DeleteDC()
     win32gui.ReleaseDC(hwin, hwindc)
@@ -115,6 +117,15 @@ def read_title(img):
     #cv.imshow('img',img)
     #cv.waitKey(0)
     return pytesseract.image_to_string(img)
+
+def read_money(img):
+    img = img[133:165,820:920]
+    img[(img>140)]=255
+    img[(img>115) & (img < 255)]=0
+    img[(img<115) & (img > 0)]=255
+    cv.imshow('img',img)
+    cv.waitKey(0)
+    return pytesseract.image_to_string(img,config="-c tessedit_char_whitelist=0123456789mk.")
 
 def focus_action(hwin,active,func,*args):
     win32gui.SetForegroundWindow(hwin)
@@ -332,6 +343,10 @@ def test():
         BMtoAH(hwin)
         AHtoBM(hwin)
 
+def testMoney(imgpath):
+  img = cv.imread(imgpath,0)
+  logging.info(read_money(img))
+
 def readData(filename):
     with open (filename, 'rb') as fp:
         data = pickle.load(fp)
@@ -339,6 +354,6 @@ def readData(filename):
     plt.show()
 
 if __name__ == '__main__':
-    main()
+    #main()
     #readData('data')
-    #test()
+    testMoney('alb_bm.jpg')
