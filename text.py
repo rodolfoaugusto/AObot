@@ -12,6 +12,7 @@ import pytesseract
 import re
 import pickle
 import matplotlib.pyplot as plt
+import re
 
 logging.basicConfig(format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S',level=logging.INFO)
 
@@ -24,6 +25,7 @@ tier = 3
 quality = 3
 data = []
 itemtype = 'staff'
+money = []
 
 def getClientWindow():
     # returns ((position),(size))
@@ -72,6 +74,7 @@ def read_BMoffers(img):
     _list = text.split(' ')
     price = _list.pop()
     assert price.isdigit()
+    assert matchPrice(price)
     #_list.pop(0)
     _list = ['Adept\'s' if x in ['Adepes','Adept’','Adept’s','Adepe’s','Adept','Adepts', 'Adeprs','Adepr’s','depes'] else x for x in _list]
     _list = ['Quarterstaff' if x in ['Quarterstaft','Quarterstaf','Quarterstatt'] else x for x in _list]
@@ -108,6 +111,7 @@ def read_AHoffers(img):
     #    _list.pop()
     itemname = ' '.join([c for c in _list])
     assert price.isdigit()
+    assert matchPrice(price)
     return (itemname,int(price))
 
 def read_title(img):
@@ -123,8 +127,8 @@ def read_money(img):
     img[(img>140)]=255
     img[(img>115) & (img < 255)]=0
     img[(img<115) & (img > 0)]=255
-    cv.imshow('img',img)
-    cv.waitKey(0)
+    #cv.imshow('img',img)
+    #cv.waitKey(0)
     return pytesseract.image_to_string(img,config="-c tessedit_char_whitelist=0123456789mk.")
 
 def focus_action(hwin,active,func,*args):
@@ -133,9 +137,10 @@ def focus_action(hwin,active,func,*args):
     win32gui.SetForegroundWindow(active)
 
 def BM(hwin,active,repeat):
-    global tier, itemtype
+    global tier, itemtype, money
     img,pos = grab_screen(hwin)
     sell(pos)
+    money.append(read_money(pos))
     if tier < 3:
         changeTier(pos,tier+1)
     else:
@@ -321,12 +326,14 @@ def main():
     active = win32gui.GetForegroundWindow()
     hwin = win32gui.FindWindow(None, "Albion Online Client")
     i=0
-    global data
+    global data, money
     while True:
         if i%4 == 0 and i != 0:
             logging.info('Writing datafile. i == '+str(i))
             with open('data', 'wb') as fp:
                 pickle.dump(data, fp)
+            with open('money', 'wb') as fp:
+                pickle.dump(money, fp)
         BMfull = BM(hwin,active,25)
         BMtoAH(hwin)
         AH(hwin,active,BMfull)
@@ -353,7 +360,10 @@ def readData(filename):
     plt.scatter(list(zip(*data))[0],list(zip(*data))[1])
     plt.show()
 
+def matchPrice(string):
+  return (re.match('^\d{1,3}(,\d{3})*$',string) is not None)
+
 if __name__ == '__main__':
-    #main()
+    main()
     #readData('data')
-    testMoney('alb_bm.jpg')
+    #testMoney('alb_bm.jpg')
