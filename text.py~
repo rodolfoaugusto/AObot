@@ -89,7 +89,7 @@ def read_BMoffers(img):
     if 'Staff' not in _list:
         logging.debug('Staff not found. Found word:')
         logging.debug(_list[-1])
-    if 'Adept\'s' not in _list and 'Expert\'s' not in _list:
+    if 'Adept\'s' not in _list or 'Expert\'s' not in _list:
         logging.debug('Adepts or Experts not found. Found word:')
         logging.debug(_list[0])
     
