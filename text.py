@@ -1,24 +1,25 @@
-import cv2 as cv
-import numpy as np
-import logging
-try:
+import sys
+if sys.argv[1]=='go':
+  import cv2 as cv
+  import numpy as np
+  import logging
   import win32gui, win32ui, win32con, win32api, win32clipboard, win32com.client
   import pyautogui
-except ModuleNotFoundError:
-  logging.warning('Application works only for Windows.')
-  pass
-import time
-import pytesseract
-import re
-import pickle
-import matplotlib.pyplot as plt
-import re
-import sys
+  import time
+  import pytesseract
+  import pickle
+  import matplotlib.pyplot as plt
+  import re
+elif sys.argv[1]=='read':
+  import pickle
+  import logging
 
 logging.basicConfig(format='%(asctime)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S',level=logging.DEBUG)
 
-pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files (x86)\Tesseract-OCR\tesseract'
-
+try:
+  pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files (x86)\Tesseract-OCR\tesseract'
+except NameError:
+  pass
 
 
 items = []
