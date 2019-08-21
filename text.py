@@ -1,5 +1,5 @@
 import sys
-if sys.argv[1]=='go':
+if sys.argv[1] is not 'read':
   import cv2 as cv
   import numpy as np
   import logging
@@ -28,7 +28,7 @@ quality = 3
 data = []
 itemtype = 'staff'
 money = []
-level = 4
+level = 5
 
 def getClientWindow():
     # returns ((position),(size))
@@ -81,21 +81,15 @@ def read_BMoffers(img):
     price = price.replace(',','')
     assert price.isdigit()
     #_list.pop(0)
+    _list = ['Grandmaster\'s' if re.match('^.*randmaste.*$',x) is not None else x for x in _list]
+    _list = ['Master\'s' if re.match('^.*ast.r.*$',x) is not None else x for x in _list]
     _list = ['Adept\'s' if x in ['Adepes','Adept’','Adept’s','Adepe’s','Adept','Adepts', 'Adeprs','Adepr’s','depes','depts'] else x for x in _list]
     _list = ['Expert\'s' if x in ['Experts','Expert’','Expert’s','Expere’s','Expert','Ecpert', 'Experrs'] else x for x in _list]
     _list = ['Quarterstaff' if x in ['Quarterstaft','Quarterstaf','Quarterstatt'] else x for x in _list]
     _list = ['Staff' if x in ['Stat','Statt','staff','statt','stat','Scatt','Scaft','Staft','staf','Staf','start','Scat','scat','Saft','staft','statf','Statf','Start','Seatt','seatf'] else x for x in _list]
     if not _list:
         return None
-    if 'Staff' not in _list:
-        logging.debug('Staff not found. Found word:')
-        logging.debug(_list[-1])
-    if 'Adept\'s' not in _list and 'Expert\'s' not in _list:
-        logging.debug('Adepts or Experts not found. Found word:')
-        logging.debug(_list[0])
     
-    #if len(_list)>1 and 'Balance' not in _list:
-    #    _list.pop()
     itemname = ' '.join([c for c in _list])
     return (itemname,int(price))
 
@@ -151,14 +145,14 @@ def BM(hwin,active,repeat):
         changeTier(pos,tier+1)
     else:
         changeTier(pos,0)
-        if quality < 3:
+        if quality < 2:
             changeQuality(pos,quality+1)
         else:
             changeQuality(pos,0)
             if level == 4:
                 changeLevel(pos,3)
             else:
-                changeLevel(pos,4)
+                changeLevel(pos,level+1)
 
     focus_action(hwin,active,typeInSearch,itemtype,pos)
     time.sleep(0.2)
@@ -273,7 +267,12 @@ def BMtoAH(hwin):
     pyautogui.mouseDown(pos[0]+1200,pos[1]+400,button='right')
     time.sleep(0.28)
     pyautogui.mouseUp(button='right')
-    time.sleep(8)
+    time.sleep(6)
+    while blackscreen(hwin):
+        logging.debug('found blackscreen. waiting...')
+        logging.debug(blackscreen(hwin))
+        time.sleep(6)
+    time.sleep(2)
     pyautogui.mouseDown(pos[0]+660,pos[1]+100,button='right')
     time.sleep(0.28)
     pyautogui.mouseUp(button='right')
@@ -301,7 +300,11 @@ def AHtoBM(hwin):
     pyautogui.mouseDown(pos[0]+740,pos[1]+720,button='right')
     time.sleep(0.28)
     pyautogui.mouseUp(button='right')
-    time.sleep(8)
+    time.sleep(6)
+    while blackscreen(hwin):
+        logging.debug('found blackscreen. waiting...')
+        time.sleep(6)
+    time.sleep(2)
     pyautogui.mouseDown(pos[0]+30,pos[1]+240,button='right')
     time.sleep(0.28)
     pyautogui.mouseUp(button='right')
@@ -318,6 +321,11 @@ def AHtoBM(hwin):
     time.sleep(0.28)
     pyautogui.mouseUp(button='left')
     time.sleep(1)
+
+def blackscreen(hwin):
+    img,pos = grab_screen(hwin)
+    logging.debug(f'sample screen color is {img[30,20]}')
+    return np.max(img[30:40,10:20]) < 15
 
 def changeTier(pos,changetier):
     global tier
@@ -362,7 +370,7 @@ def main():
         AHtoBM(hwin)
         i+=1
 
-def test():
+def testRoad():
     time.sleep(2)
     shell = win32com.client.Dispatch("WScript.Shell")
     shell.SendKeys('%')
@@ -395,6 +403,8 @@ if __name__ == '__main__':
         main()
     elif sys.argv[1]=='read':
         readMoney('money') 
+    elif sys.argv[1]=='testRoad':
+        testRoad()
 
     #readData('data')
     #testMoney('alb_bm.jpg')
