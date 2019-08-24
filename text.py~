@@ -10,7 +10,6 @@ if sys.argv[1] is not 'read':
   import pickle
   import matplotlib.pyplot as plt
   import re
-  import scapy
 elif sys.argv[1]=='read':
   import pickle
   import logging
@@ -398,9 +397,6 @@ def readMoney(filename):
 
 def matchPrice(string):
   return (re.match('^\d{1,3}(,\d{3})+$',string) is not None)
-
-def sniffPackets():
-    pass
 
 if __name__ == '__main__':
     if sys.argv[1]=='go':
