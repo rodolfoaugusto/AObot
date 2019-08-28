@@ -6,19 +6,22 @@ import ast
 fullstr=''
 def sniffOffers(count=20):
     global fullstr
-    def myfilter(pkt):
+    def callback(pkt):
         global fullstr
+        fullstr+=(str(pkt[Raw].load,'utf-8',errors='ignore'))
+    def build_lfilter(pkt):
         if ((UDP in pkt) 
         and (pkt[IP].src in albip)
         and ((b'{"' in pkt[Raw].load)
         or (b'"}' in pkt[Raw].load))
         ):
-            print('appending fullstr')
-            fullstr+=(str(pkt[Raw].load,'utf-8',errors='ignore'))
+            return True
+        else:
+            return False
     albip = ['5.188.125.51', '5.188.125.38']
     filthere=' or '.join(x for x in albip)
     sniff(filter='host '+filthere,
-            prn=lambda x: myfilter(x), count=count, store=False)
+            prn=callback, lfilter=build_lfilter, count=count, store=False)
     #a = rdpcap('ah.pcapng')
     #print(a)
     fullstr = re.sub('[^a-zA-z0-9":{},]+','',fullstr)
