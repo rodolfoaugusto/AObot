@@ -12,7 +12,6 @@ if sys.argv[1] is not 'read':
   import re
   import scapy
   import os
-  import sock
 elif sys.argv[1]=='read':
   import pickle
   import logging
@@ -45,7 +44,7 @@ def getClientWindow():
     h = rect[3] - y
     return ((x,y),(w,h))
 
-def grabScreen(hwin,region=None):
+def grab_screen(hwin,region=None):
     rect = win32gui.GetWindowRect(hwin)
     x = rect[0]
     y = rect[1]
@@ -119,7 +118,7 @@ def read_AHoffers(img):
     assert price.isdigit()
     return (itemname,int(price))
 
-def readTitle(img):
+def read_title(img):
     img = img[133:165,421:650]
     img[(img>125) & (img < 255)]=0
     img[(img<125) & (img > 0)]=255
@@ -127,7 +126,7 @@ def readTitle(img):
     #cv.waitKey(0)
     return pytesseract.image_to_string(img)
 
-def readMoney(img):
+def read_money(img):
     img = img[133:165,780:920]
     img[(img>140)]=255
     img[(img>115) & (img < 255)]=0
@@ -136,16 +135,16 @@ def readMoney(img):
     #cv.waitKey(0)
     return pytesseract.image_to_string(img,config="-c tessedit_char_whitelist=0123456789mk.")
 
-def focusAction(hwin,active,func,*args):
+def focus_action(hwin,active,func,*args):
     win32gui.SetForegroundWindow(hwin)
     func(*args)
     win32gui.SetForegroundWindow(active)
 
 def BM(hwin,active,repeat):
     global tier, itemtype, money, level
-    img,pos = grabScreen(hwin)
+    img,pos = grab_screen(hwin)
     sell(pos)
-    money.append(readMoney(img))
+    money.append(read_money(img))
     if tier < 3:
         changeTier(pos,tier+1)
     else:
@@ -159,18 +158,18 @@ def BM(hwin,active,repeat):
             else:
                 changeLevel(pos,level+1)
 
-    focusAction(hwin,active,typeInSearch,itemtype,pos)
+    focus_action(hwin,active,typeInSearch,itemtype,pos)
     time.sleep(0.2)
     full={}
-    if 'Black' in readTitle(img):
+    if 'Black' in read_title(img):
         for _ in range(repeat):
-            img,pos = grabScreen(hwin)
+            img,pos = grab_screen(hwin)
             try:
                 res = read_BMoffers(img)
-                focusAction(hwin,active,dragup,pos)
+                focus_action(hwin,active,dragup,pos)
             except AssertionError:
                 logging.debug('Assertion error (cant process item text)')
-                focusAction(hwin,active,dragup,pos)
+                focus_action(hwin,active,dragup,pos)
                 continue
             try:
                 if res[0] not in full:
@@ -190,12 +189,12 @@ def BM(hwin,active,repeat):
 
 def AH(hwin,active,BMfull):
     global data
-    img,pos = grabScreen(hwin)
-    if 'Marketplace' in readTitle(img):
+    img,pos = grab_screen(hwin)
+    if 'Marketplace' in read_title(img):
         for itemname in BMfull:
-            focusAction(hwin,active,typeInSearch,itemname,pos)
+            focus_action(hwin,active,typeInSearch,itemname,pos)
             time.sleep(0.4)
-            img,pos = grabScreen(hwin)
+            img,pos = grab_screen(hwin)
             try:
                 res = read_AHoffers(img)
                 val = (BMfull[itemname]-res[1])/res[1]
@@ -266,7 +265,7 @@ def buy(pos,itemname):
     items.append(itemname)
 
 def BMtoAH(hwin):
-    img,pos = grabScreen(hwin)
+    img,pos = grab_screen(hwin)
     pyautogui.keyDown('esc')
     time.sleep(0.28)
     pyautogui.keyUp('esc')
@@ -302,7 +301,7 @@ def BMtoAH(hwin):
 
 def AHtoBM(hwin):
     time.sleep(0.2)
-    img,pos = grabScreen(hwin)
+    img,pos = grab_screen(hwin)
     pyautogui.keyDown('esc')
     time.sleep(0.28)
     pyautogui.keyUp('esc')
@@ -341,7 +340,7 @@ def AHtoBM(hwin):
     time.sleep(1)
 
 def blackscreen(hwin):
-    img,pos = grabScreen(hwin)
+    img,pos = grab_screen(hwin)
     logging.debug(f'sample screen color is {img[30,20]}')
     return np.max(img[30:40,10:20]) < 15
 
@@ -400,7 +399,7 @@ def testRoad():
 
 def testMoney(imgpath):
   img = cv.imread(imgpath,0)
-  logging.info(readMoney(img))
+  logging.info(read_money(img))
 
 def readData(filename):
     with open (filename, 'rb') as fp:

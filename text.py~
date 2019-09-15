@@ -12,7 +12,6 @@ if sys.argv[1] is not 'read':
   import re
   import scapy
   import os
-  import sock
 elif sys.argv[1]=='read':
   import pickle
   import logging
@@ -45,7 +44,7 @@ def getClientWindow():
     h = rect[3] - y
     return ((x,y),(w,h))
 
-def grabScreen(hwin,region=None):
+def grab_screen(hwin,region=None):
     rect = win32gui.GetWindowRect(hwin)
     x = rect[0]
     y = rect[1]
@@ -143,7 +142,7 @@ def focusAction(hwin,active,func,*args):
 
 def BM(hwin,active,repeat):
     global tier, itemtype, money, level
-    img,pos = grabScreen(hwin)
+    img,pos = grab_screen(hwin)
     sell(pos)
     money.append(readMoney(img))
     if tier < 3:
@@ -164,7 +163,7 @@ def BM(hwin,active,repeat):
     full={}
     if 'Black' in readTitle(img):
         for _ in range(repeat):
-            img,pos = grabScreen(hwin)
+            img,pos = grab_screen(hwin)
             try:
                 res = read_BMoffers(img)
                 focusAction(hwin,active,dragup,pos)
@@ -190,12 +189,12 @@ def BM(hwin,active,repeat):
 
 def AH(hwin,active,BMfull):
     global data
-    img,pos = grabScreen(hwin)
+    img,pos = grab_screen(hwin)
     if 'Marketplace' in readTitle(img):
         for itemname in BMfull:
             focusAction(hwin,active,typeInSearch,itemname,pos)
             time.sleep(0.4)
-            img,pos = grabScreen(hwin)
+            img,pos = grab_screen(hwin)
             try:
                 res = read_AHoffers(img)
                 val = (BMfull[itemname]-res[1])/res[1]
@@ -266,7 +265,7 @@ def buy(pos,itemname):
     items.append(itemname)
 
 def BMtoAH(hwin):
-    img,pos = grabScreen(hwin)
+    img,pos = grab_screen(hwin)
     pyautogui.keyDown('esc')
     time.sleep(0.28)
     pyautogui.keyUp('esc')
@@ -302,7 +301,7 @@ def BMtoAH(hwin):
 
 def AHtoBM(hwin):
     time.sleep(0.2)
-    img,pos = grabScreen(hwin)
+    img,pos = grab_screen(hwin)
     pyautogui.keyDown('esc')
     time.sleep(0.28)
     pyautogui.keyUp('esc')
@@ -341,7 +340,7 @@ def AHtoBM(hwin):
     time.sleep(1)
 
 def blackscreen(hwin):
-    img,pos = grabScreen(hwin)
+    img,pos = grab_screen(hwin)
     logging.debug(f'sample screen color is {img[30,20]}')
     return np.max(img[30:40,10:20]) < 15
 

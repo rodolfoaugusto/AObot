@@ -1,7 +1,9 @@
 from scapy.all import *
+import time
 import json
 import re
 import ast
+import requests
 
 fullstr=''
 def sniffOffers(count=20):
@@ -18,7 +20,7 @@ def sniffOffers(count=20):
             return True
         else:
             return False
-    albip = ['5.188.125.51', '5.188.125.38']
+    albip = ['5.188.125.51', '5.188.125.38','5.188.125.26']
     filthere=' or '.join(x for x in albip)
     sniff(filter='host '+filthere,
             prn=callback, lfilter=build_lfilter, count=count, store=False)
@@ -36,6 +38,25 @@ def sniffOffers(count=20):
     return dictlist
 
 
+def send(obj,market):
+    obj['auctId']=obj['Id']
+    obj['UnitPriceSilver']=str(obj['UnitPriceSilver'])[:-4]
+    obj['TotalPriceSilver']=str(obj['TotalPriceSilver'])[:-4]
+    obj['Market']=market
+    toch=obj['Expires']
+    ch=toch[0:4]+'-'+toch[4:6]+'-'+toch[6:17]+'.'+toch[17:]
+    obj['Expires']=ch
+    r = requests.post('http://alb.jakjus.com/api/item/', data=obj, auth=('admin','okszuj'))
+    print(r.text)
 
 if __name__ == '__main__':
-    print(sniffOffers())
+    while True:
+        off = sniffOffers() 
+        #print(off)
+        if off:
+            for offer in off:
+                send(offer, 'Black Market')
+            else:
+                print('Waiting for offers...')
+                time.sleep(3)
+        off = []
