@@ -427,4 +427,3 @@ if __name__ == '__main__':
         testRoad()
     elif sys.argv[1]=='readData':
         readData('data')
-    #testMoney('alb_bm.jpg')
